@@ -1,135 +1,59 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <title>CRUD App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <script>
-        if (!sessionStorage.getItem("user")) {
-            window.location.href = "login.html";
-        }
-    </script>
+    <link rel="stylesheet" href="../src/style.css">
+    <script defer src="../src/script.js"></script>
 </head>
+
 <body class="bg-gray-100 p-6">
-    <div class="max-w-4xl mx-auto bg-blue-800 p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold mb-4 text-white">CRUD App</h2>
+    <div class="max-w-4xl mx-auto bg-blue-900 p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold mb-4">CRUD App</h2>
         <div class="flex justify-between mb-4">
             <button onclick="showForm()" class="bg-blue-500 text-white px-4 py-2 rounded">Tambah Data</button>
             <button onclick="exportToCSV()" class="bg-green-500 text-white px-4 py-2 rounded">Export CSV</button>
+            <input type="file" id="importFile" accept=".csv" class="hidden" onchange="importCSV(event)">
+            <button onclick="document.getElementById('importFile').click()"
+                class="bg-purple-500 text-white px-4 py-2 rounded">Import CSV</button>
             <button onclick="toggleDarkMode()" class="bg-gray-800 text-white px-4 py-2 rounded">Dark Mode</button>
             <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded">Logout</button>
         </div>
-        <input type="text" id="search" placeholder="Cari..." onkeyup="searchData()" class="border p-2 rounded w-full mb-4">
-        
-        <div id="form" class="hidden mb-4 bg-white p-4 rounded shadow">
+        <input type="text" id="search" placeholder="Cari..." onkeyup="searchData()"
+            class="border p-2 rounded w-full mb-4">
+
+        <div id="form" class="hidden mb-4 transition-opacity duration-300">
             <input type="hidden" id="itemId">
             <input type="text" id="itemName" placeholder="Nama" class="border p-2 rounded w-full mb-2">
             <textarea id="itemDesc" placeholder="Deskripsi" class="border p-2 rounded w-full mb-2"></textarea>
-            <button onclick="saveData()" class="bg-green-500 text-white px-4 py-2 rounded">Simpan</button>
+            <div class="flex gap-2">
+                <button onclick="saveData()" class="bg-green-500 text-white px-4 py-2 rounded">Simpan</button>
+                <button onclick="resetForm()" class="bg-gray-500 text-white px-4 py-2 rounded">Reset</button>
+            </div>
         </div>
     </div>
-    
+
     <table class="w-full border-collapse border border-gray-300 mt-5">
         <thead>
-            <tr class="bg-gray-200">
-                <th class="border p-2">ID</th>
-                <th class="border p-2">Nama</th>
+            <tr class="bg-gray-200 cursor-pointer">
+                <th class="border p-2" onchange="sortData() " id="sort">Nama </th>
                 <th class="border p-2">Deskripsi</th>
-                <th class="border p-1"></th>
+                <th class="border p-2">Aksi</th>
             </tr>
         </thead>
         <tbody id="data-list"></tbody>
     </table>
 
-    <script>
-        function showForm() {
-            document.getElementById("form").classList.toggle("hidden");
-            document.getElementById("itemId").value = "";
-            document.getElementById("itemName").value = "";
-            document.getElementById("itemDesc").value = "";
-        }
+    <div id="pagination" class="mt-4 flex justify-center space-x-2"></div>
+    <div class="flex justify-center mt-4">
+        <button onclick="prevPage()" class="bg-blue-500 text-white px-4 py-2 rounded">Sebelumnya</button>
+        <span id="page-info" class="mx-4"></span>
+        <button onclick="nextPage()" class="bg-blue-500 text-white px-4 py-2 rounded">Berikutnya</button>
+    </div>
 
-        function loadData() {
-            fetch("../server/crud.php?action=get")
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById("data-list").innerHTML = data.map(d => 
-                    `<tr>
-                        <td class="border p-2">${d.id}</td>
-                        <td class="border p-2">${d.name}</td>
-                        <td class="border p-2">${d.description}</td>
-                        <td class="border p-2">
-                            <button onclick="editData(${d.id}, '${d.name}', '${d.description}')" class="bg-yellow-500 text-white px-2 py-1 rounded">Edit</button>
-                            <button onclick="deleteData(${d.id})" class="bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
-                        </td>
-                    </tr>`
-                ).join("");
-            });
-        }
 
-        function saveData() {
-            let id = document.getElementById("itemId").value;
-            let name = document.getElementById("itemName").value.trim();
-            let desc = document.getElementById("itemDesc").value.trim();
-            
-            if (!name || !desc) {
-                alert("Nama dan Deskripsi tidak boleh kosong!");
-                return;
-            }
-
-            fetch(`../server/crud.php?action=${id ? "update" : "add"}`, {
-                method: "POST",
-                body: new URLSearchParams({ id, name, description: desc })
-            }).then(() => {
-                loadData();
-                showForm();
-            });
-        }
-
-        function deleteData(id) {
-            if (!confirm("Yakin ingin menghapus data ini?")) return;
-            fetch("../server/crud.php?action=delete", {
-                method: "POST",
-                body: new URLSearchParams({ id })
-            }).then(() => loadData());
-        }
-
-        function searchData() {
-            let filter = document.getElementById("search").value.toLowerCase();
-            let rows = document.querySelectorAll("#data-list tr");
-            rows.forEach(row => {
-                let name = row.children[1].textContent.toLowerCase();
-                row.style.display = name.includes(filter) ? "" : "none";
-            });
-        }
-
-        function logout() {
-            sessionStorage.removeItem("user");
-            window.location.href = "login.html";
-        }
-
-        function toggleDarkMode() {
-            document.body.classList.toggle("bg-gray-900");
-            document.body.classList.toggle("text-white");
-            document.body.classList.toggle("bg-gray-100");
-        }
-
-        function exportToCSV() {
-            let rows = document.querySelectorAll("#data-list tr");
-            let csvContent = "data:text/csv;charset=utf-8,ID,Nama,Deskripsi\n";
-            rows.forEach(row => {
-                let cols = row.children;
-                csvContent += `${cols[0].textContent},${cols[1].textContent},${cols[2].textContent}\n`;
-            });
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "data.csv");
-            document.body.appendChild(link);
-            link.click();
-        }
-
-        loadData();
-    </script>
+    <div id="toast" class="hidden fixed bottom-5 right-5 bg-green-500 text-white p-3 rounded shadow-md"></div>
 </body>
+
 </html>
