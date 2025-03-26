@@ -6,17 +6,19 @@ document.addEventListener("DOMContentLoaded", () => {
     applyDarkMode();
 });
 
+let currentPage = 1;
+const rowsPerPage = 5;
+let dataCache = [];
+let chartInstance = null;
+
 function showForm(id = "", name = "", description = "") {
     let form = document.getElementById("form");
-    if (form.classList.contains("hidden")) {
-        form.classList.remove("hidden");
-    }
+    form.classList.toggle("hidden", !id && !name && !description);
 
     document.getElementById("itemId").value = id;
     document.getElementById("itemName").value = name;
     document.getElementById("itemDesc").value = description;
 }
-
 
 function resetForm() {
     document.getElementById("itemId").value = "";
@@ -28,15 +30,13 @@ function saveData() {
     let id = document.getElementById("itemId").value;
     let name = document.getElementById("itemName").value.trim();
     let desc = document.getElementById("itemDesc").value.trim();
-    
+
     if (!name || !desc) {
         alert("Nama dan Deskripsi tidak boleh kosong!");
         return;
     }
 
-    if (id && !confirm("Yakin ingin menyimpan perubahan ini?")) {
-        return;
-    }
+    if (id && !confirm("Yakin ingin menyimpan perubahan ini?")) return;
 
     fetch(`../server/crud.php?action=${id ? "update" : "add"}`, {
         method: "POST",
@@ -47,27 +47,22 @@ function saveData() {
     });
 }
 
-
-let currentPage = 1;
-const rowsPerPage = 5;
-let dataCache = [];
-
 function loadData() {
     fetch("../server/crud.php?action=get")
-    .then(res => res.json())
-    .then(data => {
-        dataCache = data;
-        renderTable();
-    });
+        .then(res => res.json())
+        .then(data => {
+            dataCache = data;
+            renderTable();
+            updateChart();
+        });
 }
 
 function renderTable() {
     let start = (currentPage - 1) * rowsPerPage;
     let paginatedData = dataCache.slice(start, start + rowsPerPage);
-    
+
     document.getElementById("data-list").innerHTML = paginatedData.map(d =>
         `<tr>
-            
             <td class="border p-2">${d.name}</td>
             <td class="border p-2">${d.description}</td>
             <td class="border p-2">
@@ -98,14 +93,6 @@ function editData(id, name, description) {
     showForm(id, name, description);
 }
 
-
-function showToast(msg) {
-    let toast = document.getElementById("toast");
-    toast.textContent = msg;
-    toast.classList.remove("hidden");
-    setTimeout(() => toast.classList.add("hidden"), 3000);
-}
-
 function deleteData(id) {
     if (!confirm("Yakin ingin menghapus data ini?")) return;
     fetch("../server/crud.php?action=delete", {
@@ -115,6 +102,13 @@ function deleteData(id) {
         loadData();
         showToast("Data berhasil dihapus!");
     });
+}
+
+function showToast(msg) {
+    let toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 3000);
 }
 
 function toggleDarkMode() {
@@ -128,8 +122,12 @@ function applyDarkMode() {
         document.body.classList.add("bg-gray-900", "text-white");
     }
 }
+
 function sortData() {
     let sortBy = document.getElementById("sort").value;
+    
+    if (!sortBy || !dataCache.length) return;
+
     dataCache.sort((a, b) => (a[sortBy] > b[sortBy]) ? 1 : -1);
     renderTable();
 }
@@ -137,4 +135,35 @@ function sortData() {
 function logout() {
     sessionStorage.removeItem("user");
     window.location.href = "login.html";
+}
+
+function updateChart() {
+    let categories = ["Total Data"];
+    let values = [dataCache.length];
+
+    let ctx = document.getElementById("dataChart").getContext("2d");
+
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: categories,
+            datasets: [{
+                label: "Jumlah Data",
+                data: values,
+                backgroundColor: "rgba(54, 162, 235, 1)",
+                borderColor: "rgba(54, 162, 235, 1)",
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
 }

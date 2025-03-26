@@ -2,58 +2,74 @@
 <html lang="id">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CRUD App</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="../src/style.css">
     <script defer src="../src/script.js"></script>
 </head>
 
-<body class="bg-gray-100 p-6">
+<body class="bg-gray-100 p-4 sm:p-6">
     <div class="max-w-4xl mx-auto bg-blue-900 p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold mb-4">CRUD App</h2>
-        <div class="flex justify-between mb-4">
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-4">CRUD App</h2>
+
+        <!-- Tombol dan Pencarian -->
+        <div class="grid grid-cols-2 sm:flex sm:justify-between gap-2 mb-4">
             <button onclick="showForm()" class="bg-blue-500 text-white px-4 py-2 rounded">Tambah Data</button>
             <button onclick="exportToCSV()" class="bg-green-500 text-white px-4 py-2 rounded">Export CSV</button>
             <input type="file" id="importFile" accept=".csv" class="hidden" onchange="importCSV(event)">
-            <button onclick="document.getElementById('importFile').click()"
-                class="bg-purple-500 text-white px-4 py-2 rounded">Import CSV</button>
+            <button onclick="document.getElementById('importFile').click()" class="bg-purple-500 text-white px-4 py-2 rounded">Import CSV</button>
             <button onclick="toggleDarkMode()" class="bg-gray-800 text-white px-4 py-2 rounded">Dark Mode</button>
             <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded">Logout</button>
         </div>
-        <input type="text" id="search" placeholder="Cari..." onkeyup="searchData()"
-            class="border p-2 rounded w-full mb-4">
 
+        <!-- Input Pencarian -->
+        <input type="text" id="search" placeholder="Cari..." onkeyup="searchData()" class="border p-2 rounded w-full mb-4">
+
+        <!-- Form Input -->
         <div id="form" class="hidden mb-4 transition-opacity duration-300">
             <input type="hidden" id="itemId">
             <input type="text" id="itemName" placeholder="Nama" class="border p-2 rounded w-full mb-2">
             <textarea id="itemDesc" placeholder="Deskripsi" class="border p-2 rounded w-full mb-2"></textarea>
             <div class="flex gap-2">
-                <button onclick="saveData()" class="bg-green-500 text-white px-4 py-2 rounded">Simpan</button>
-                <button onclick="resetForm()" class="bg-gray-500 text-white px-4 py-2 rounded">Reset</button>
+                <button onclick="saveData()" class="bg-green-500 text-white px-4 py-2 rounded w-full">Simpan</button>
+                <button onclick="resetForm()" class="bg-gray-500 text-white px-4 py-2 rounded w-full">Reset</button>
             </div>
         </div>
     </div>
 
-    <table class="w-full border-collapse border border-gray-300 mt-5">
-        <thead>
-            <tr class="bg-gray-200 cursor-pointer">
-                <th class="border p-2" onchange="sortData() " id="sort">Nama </th>
-                <th class="border p-2">Deskripsi</th>
-                <th class="border p-2">Aksi</th>
-            </tr>
-        </thead>
-        <tbody id="data-list"></tbody>
-    </table>
+    <!-- Tabel Data -->
+    <div class="overflow-x-auto">
+        <table class="w-full border-collapse border border-gray-300 mt-5">
+            <thead>
+                <tr class="bg-blue-900 text-white">
+                    <th class="border p-2">Nama</th>
+                    <th class="border p-2">Deskripsi</th>
+                    <th class="border p-2">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="data-list"></tbody>
+        </table>
+    </div>
 
-    <div id="pagination" class="mt-4 flex justify-center space-x-2"></div>
-    <div class="flex justify-center mt-4">
+    <!-- Navigasi Halaman -->
+    <div class="flex flex-col sm:flex-row justify-center items-center mt-4 space-y-2 sm:space-y-0 sm:space-x-2">
         <button onclick="prevPage()" class="bg-blue-500 text-white px-4 py-2 rounded">Sebelumnya</button>
-        <span id="page-info" class="mx-4"></span>
+        <span id="page-info" class="text-gray-700 text-lg font-semibold"></span>
         <button onclick="nextPage()" class="bg-blue-500 text-white px-4 py-2 rounded">Berikutnya</button>
     </div>
 
+    <!-- Grafik Statistik -->
+    <div class="max-w-7xl mx-auto bg-white p-4 rounded-lg shadow-md mt-6">
+        <h3 class="text-lg font-bold mb-2">Statistik Data</h3>
+        <canvas id="dataChart"></canvas>
+    </div>
 
+    <!-- Notifikasi Toast -->
     <div id="toast" class="hidden fixed bottom-5 right-5 bg-green-500 text-white p-3 rounded shadow-md"></div>
+
 </body>
 
 </html>
